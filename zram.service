@@ -1,0 +1,11 @@
+[Unit]
+Description=Service enabling compressing RAM with zRam
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/zram-utils/zram-enable
+ExecStop=/usr/libexec/zram-utils/zram-disable
+RemainAfterExit=yes

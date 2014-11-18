@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+
+set -u
+set -e
+
+if grep -q '^/dev/zram0\s' /proc/swaps; then
+    /usr/sbin/swapoff "/dev/zram0"
+fi
+
+if grep -q "^zram " /proc/modules; then
+    sleep 1
+    /usr/sbin/rmmod zram
+fi

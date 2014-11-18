@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -e
+set -u
+
+version=0.1
+name=zram-utils
+archive="$name-$version.tar.gz"
+
+: ${DESTDIR=}
+
+libdir="$DESTDIR/usr/libexec/zram-utils"
+servicedir="$DESTDIR/usr/lib/systemd/system"
+bindir="$DESTDIR/usr/bin"
+
+self="$(dirname "$0")"
+
+usage_err() {
+    printf "Error: %s\nUsage: %s install|uninstall|tar\n" "$*" "$0" 1>&2
+    exit 1
+}
+
+do_install() {
+    set -x
+    install -m 755 -d "$libdir" "$servicedir" "$bindir"
+    install -m 755 -t "$libdir" "$self/zram-enable" "$self/zram-disable"
+    install -m 644 -t "$servicedir" "$self/zram.service"
+    install -m 755 -t "$bindir" "$self/zram-status"
+}
+
+do_uninstall() {
+    set -x
+    systemctl disable zram.service
+    systemctl stop zram.service
+    rm -f "$libdir/zram-enable" "$libdir/zram-disable" \
+       "$servicedir/zram.service" "$bindir/zram-status"
+    [ -d "$libdir" ] && rmdir "$libdir"
+}
+
+do_tar() {
+    (set -x    
+     tar -C "$self" -czf "$self/$archive" \
+	 --exclude "$archive" --exclude .gitignore --exclude .git \
+	 --transform "s/^\./$name-$version/" .
+     )
+}
+
+do_rpm() {
+    do_tar
+    (set -x    
+     rpmbuild -ta "$self/$archive"
+    )
+}
+
+[ $# -ge 1 ] || usage_err "no action argument"
+
+case "$1" in
+    install ) do_install;;
+    uninstall ) do_uninstall;;
+    tar ) do_tar;;
+    rpm ) do_rpm;;
+    * ) usage_err "unknown action argument - $1";;
+esac

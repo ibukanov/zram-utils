@@ -1,0 +1,22 @@
+#!/usr/bin/bash
+
+set -u
+set -e
+
+dir=/sys/block/zram0
+if [ ! -d "$dir" ]; then
+    echo "status: disabled"
+    exit 0
+fi
+
+mem_used_total="$(cat $dir/mem_used_total)"
+orig_data_size="$(cat $dir/orig_data_size)"
+
+echo "status: enabled"
+echo "compression: $((($orig_data_size - $mem_used_total) * 100 / $mem_used_total))%"
+echo "disksize: $(($(cat $dir/disksize) / 1048576))M"
+echo "compr_data_size: $(($(cat $dir/compr_data_size) / 1024))K"
+echo "orig_data_size: $(($orig_data_size / 1024))K"
+echo "mem_used_total: $(($mem_used_total / 1024))K"
+echo "max_comp_streams: $(cat $dir/max_comp_streams)"
+echo "comp_algorithm: $(cat $dir/comp_algorithm)"
