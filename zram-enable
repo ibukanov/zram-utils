@@ -3,11 +3,7 @@
 set -u
 set -e
 
-# By default the factor of 100 makes zram disk to match the memory
-# size. Assuming 50% compression that allows to increase available
-# memory by 1.5.
-SWAP_SIZE=100%
-NUM_DEVICES=1
+source /usr/libexec/zram-utils/zram.conf
 
 if [ -f /etc/sysconfig/zram ]; then
     source /etc/sysconfig/zram || true
@@ -40,8 +36,8 @@ process_swap_size() {
     fi
 }
 
-[ -z "${NUM_DEVICES##[0-9]}" -a 1 -le ${NUM_DEVICES} ] || \
-    err "NUM_DEVICES is not a positive integer - $NUM_DEVICES"
+[ -z "${EXTRA_DEVICES##[0-9]}" ] || \
+    err "EXTRA_DEVICES value '$EXTRA_DEVICES' is not zero or positive integer"
     
 process_swap_size
 
@@ -51,7 +47,7 @@ if [ 0 = "$num_cpus" ]; then
 fi
 
 /usr/sbin/rmmod zram > /dev/null 2>&1 || true
-/usr/sbin/modprobe -q zram num_devices=$NUM_DEVICES > /dev/null 2>&1
+/usr/sbin/modprobe -q zram num_devices=$((1 + $EXTRA_DEVICES)) > /dev/null 2>&1
 
 echo $num_cpus > /sys/block/zram0/max_comp_streams
 
